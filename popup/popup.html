@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>KW Checker</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <span class="logo">KW</span> Checker
+    <span id="status-pill" class="pill pill-warn">…</span>
+  </header>
+
+  <section id="sec-google">
+    <h2>Google Ads API <span class="tag">keyword data</span></h2>
+
+    <div class="row-status" id="google-status"></div>
+
+    <label>OAuth Client ID <small>(Web application)</small></label>
+    <input id="f-clientid" type="text" placeholder="1234-abc.apps.googleusercontent.com" spellcheck="false">
+
+    <label>Developer Token</label>
+    <input id="f-devtoken" type="password" placeholder="from Ads account → API Center" spellcheck="false">
+
+    <label>Customer ID</label>
+    <input id="f-customerid" type="text" placeholder="123-456-7890">
+
+    <label>Login Customer ID <small>(only if token is from a manager account)</small></label>
+    <input id="f-logincid" type="text" placeholder="manager account CID — optional">
+
+    <div class="btnrow">
+      <button id="b-save" class="primary">Save</button>
+      <button id="b-connect">Connect Google</button>
+      <button id="b-test-google">Test</button>
+    </div>
+    <div class="hint" id="google-hint"></div>
+  </section>
+
+  <section id="sec-ahrefs">
+    <h2>Ahrefs <span class="tag">Domain Rating</span></h2>
+
+    <div class="row-status" id="ahrefs-status"></div>
+
+    <label>APIv3 Key <small>(free)</small></label>
+    <input id="f-ahrefs" type="password" placeholder="from app.ahrefs.com → Account → API keys" spellcheck="false">
+
+    <div class="btnrow">
+      <button id="b-save2" class="primary">Save</button>
+      <button id="b-test-ahrefs">Test</button>
+    </div>
+    <div class="hint" id="ahrefs-hint"></div>
+  </section>
+
+  <section id="sec-rdap">
+    <h2>RDAP <span class="tag">site age</span></h2>
+    <div class="row-status" id="rdap-status"></div>
+    <div class="btnrow">
+      <button id="b-test-rdap">Test</button>
+    </div>
+    <div class="hint" id="rdap-hint"></div>
+  </section>
+
+  <section id="sec-cache">
+    <h2>Cache</h2>
+    <div class="hint" id="cache-info"></div>
+    <div class="btnrow">
+      <button id="b-clear-cache" class="danger">Clear cache</button>
+      <button id="b-disconnect" class="danger">Sign out Google</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>DR shown under license — <a href="https://ahrefs.com/" target="_blank" rel="noopener">Domain Rating by Ahrefs</a></span>
+    <span id="ver"></span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>
