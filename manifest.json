@@ -1,19 +1,15 @@
 {
   "manifest_version": 3,
   "name": "KW Checker",
-  "version": "0.1.9",
-  "description": "Search volume, CPC, competition, Ahrefs DR and site age right on Google results. Personal keyword research.",
+  "version": "0.3.0",
+  "description": "Keywords, Ahrefs DR, Moz DA, Site Age, Traffic Rank, CMS Framework & Monetization model on Google results.",
   "minimum_chrome_version": "116",
   "permissions": [
     "storage",
     "identity"
   ],
   "host_permissions": [
-    "https://googleads.googleapis.com/",
-    "https://oauth2.googleapis.com/",
-    "https://accounts.google.com/",
-    "https://api.ahrefs.com/",
-    "https://rdap.org/"
+    "https://*/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js",

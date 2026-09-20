@@ -1,19 +1,40 @@
 // KW Checker — background service worker (module)
 
-import { getSettings, saveSettings, isGoogleConfigured, isAhrefsConfigured } from '../lib/settings.js';
+import {
+  getSettings,
+  saveSettings,
+  isGoogleConfigured,
+  isAhrefsConfigured,
+  isOpenPageRankConfigured,
+  isMozConfigured
+} from '../lib/settings.js';
 import * as oauth from '../lib/oauth.js';
 import * as googleAds from '../lib/google-ads.js';
 import * as ahrefs from '../lib/ahrefs.js';
 import * as rdap from '../lib/rdap.js';
+import * as techDetect from '../lib/tech-detect.js';
+import * as trafficRank from '../lib/traffic-rank.js';
+import * as moz from '../lib/moz.js';
 import { cacheStats, sweepExpired } from '../lib/cache.js';
 
 chrome.runtime.onInstalled.addListener(() => { sweepExpired(); });
 chrome.runtime.onStartup?.addListener?.(() => { sweepExpired(); });
 
 async function analyze(query, domains) {
-  const [kwResult, ...domainResults] = await Promise.allSettled([
+  const targetDomains = Array.isArray(domains) ? domains.slice(0, 20) : [];
+
+  // Execute Keyword metrics, per-domain lookups, and bulk lookups in parallel
+  const [kwResult, domainSettled, oprResult, mozResult] = await Promise.allSettled([
     googleAds.keywordMetrics(query),
-    ...domains.map(d => Promise.allSettled([ahrefs.domainRating(d), rdap.siteAge(d)]))
+    Promise.allSettled(targetDomains.map(d =>
+      Promise.allSettled([
+        ahrefs.domainRating(d),
+        rdap.siteAge(d),
+        techDetect.detectTech(d)
+      ])
+    )),
+    trafficRank.bulkTrafficRank(targetDomains),
+    moz.bulkMozMetrics(targetDomains)
   ]);
 
   let keyword = null;
@@ -24,20 +45,35 @@ async function analyze(query, domains) {
     keywordError = String(kwResult.reason?.message || kwResult.reason);
   }
 
+  const oprMap = oprResult.status === 'fulfilled' ? oprResult.value : {};
+  const mozMap = mozResult.status === 'fulfilled' ? mozResult.value : {};
+
+  const domainResultsList = domainSettled.status === 'fulfilled' ? domainSettled.value : [];
   const domainInfo = {};
-  domains.forEach((d, i) => {
-    // Inner Promise.allSettled never rejects; result is {status, value: [drR, ageR]}
-    const settled = domainResults[i];
-    const pair = settled && settled.status === 'fulfilled' ? settled.value : [];
-    const [drR, ageR] = pair;
+
+  targetDomains.forEach((d, i) => {
+    const itemSettled = domainResultsList[i];
+    const tri = itemSettled && itemSettled.status === 'fulfilled' ? itemSettled.value : [];
+    const [drR, ageR, techR] = tri;
+
     const dr = drR && drR.status === 'fulfilled' ? drR.value : { domain: d, dr: null, error: String(drR?.reason?.message || drR?.reason || 'DR lookup failed') };
     const age = ageR && ageR.status === 'fulfilled' ? ageR.value : { domain: d, age: null, error: String(ageR?.reason?.message || ageR?.reason || 'age lookup failed') };
+    const tech = techR && techR.status === 'fulfilled' ? techR.value : { domain: d, framework: null };
+
+    const opr = oprMap[d] || {};
+    const mozData = mozMap[d] || {};
+
     domainInfo[d] = {
       dr: dr.dr ?? null,
       drError: dr.error || null,
       age: age.age ?? null,
       registered: age.registered || null,
-      ageError: age.error || null
+      ageError: age.error || null,
+      framework: tech.framework || null,
+      rank: opr.rank || null,
+      pageRank: opr.pageRank || null,
+      da: mozData.da ?? null,
+      pa: mozData.pa ?? null
     };
   });
 
@@ -58,9 +94,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           const s = await getSettings();
           sendResponse({
             ok: true,
-            settings: { ...s, developerToken: s.developerToken ? '••••' : '', ahrefsKey: s.ahrefsKey ? '••••' : '' },
+            settings: {
+              ...s,
+              developerToken: s.developerToken ? '••••' : '',
+              ahrefsKey: s.ahrefsKey ? '••••' : '',
+              openPageRankKey: s.openPageRankKey ? '••••' : '',
+              mozToken: s.mozToken ? '••••' : ''
+            },
             googleConfigured: isGoogleConfigured(s),
             ahrefsConfigured: isAhrefsConfigured(s),
+            openPageRankConfigured: isOpenPageRankConfigured(s),
+            mozConfigured: isMozConfigured(s),
             googleSignedIn: !(await oauth.signedOut()),
             cache: await cacheStats()
           });
@@ -68,7 +112,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
         case 'kw:saveSettings': {
           const saved = await saveSettings(msg.patch || {});
-          sendResponse({ ok: true, saved: { ...saved, developerToken: '••••', ahrefsKey: '••••' } });
+          sendResponse({
+            ok: true,
+            saved: {
+              ...saved,
+              developerToken: '••••',
+              ahrefsKey: '••••',
+              openPageRankKey: '••••',
+              mozToken: '••••'
+            }
+          });
           break;
         }
         case 'kw:connect': {
@@ -95,6 +148,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         }
         case 'kw:testRdap': {
           const r = await rdap.testRdap();
+          sendResponse({ ok: true, result: r });
+          break;
+        }
+        case 'kw:testTech': {
+          const r = await techDetect.testTech();
+          sendResponse({ ok: true, result: r });
+          break;
+        }
+        case 'kw:testOpenPageRank': {
+          const r = await trafficRank.testOpenPageRank();
+          sendResponse({ ok: true, result: r });
+          break;
+        }
+        case 'kw:testMoz': {
+          const r = await moz.testMoz();
           sendResponse({ ok: true, result: r });
           break;
         }

@@ -16,17 +16,29 @@
 
     <div class="row-status" id="google-status"></div>
 
-    <label>OAuth Client ID <small>(Web application)</small></label>
-    <input id="f-clientid" type="text" placeholder="1234-abc.apps.googleusercontent.com" spellcheck="false">
+    <div class="field-group">
+      <label for="f-clientid">OAuth Client ID <small>(Web application)</small></label>
+      <input id="f-clientid" type="text" placeholder="1234-abc.apps.googleusercontent.com" spellcheck="false">
+      <a class="field-link" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">↗ Get OAuth Client ID (Google Cloud Console)</a>
+    </div>
 
-    <label>Developer Token</label>
-    <input id="f-devtoken" type="password" placeholder="from Ads account → API Center" spellcheck="false">
+    <div class="field-group">
+      <label for="f-devtoken">Developer Token</label>
+      <input id="f-devtoken" type="password" placeholder="from Ads account → API Center" spellcheck="false">
+      <a class="field-link" href="https://ads.google.com/aw/apicenter" target="_blank" rel="noopener">↗ Get Developer Token (Google Ads API Center)</a>
+    </div>
 
-    <label>Customer ID</label>
-    <input id="f-customerid" type="text" placeholder="123-456-7890">
+    <div class="field-group">
+      <label for="f-customerid">Customer ID</label>
+      <input id="f-customerid" type="text" placeholder="123-456-7890">
+      <a class="field-link" href="https://ads.google.com/" target="_blank" rel="noopener">↗ Find 10-digit CID at top-right of Google Ads</a>
+    </div>
 
-    <label>Login Customer ID <small>(only if token is from a manager account)</small></label>
-    <input id="f-logincid" type="text" placeholder="manager account CID — optional">
+    <div class="field-group">
+      <label for="f-logincid">Login Customer ID <small>(manager account only)</small></label>
+      <input id="f-logincid" type="text" placeholder="manager account CID — optional">
+      <a class="field-link" href="https://ads.google.com/home/tools/manager-accounts/" target="_blank" rel="noopener">↗ Create / View Manager Account (MCC)</a>
+    </div>
 
     <div class="btnrow">
       <button id="b-save" class="primary">Save</button>
@@ -41,8 +53,11 @@
 
     <div class="row-status" id="ahrefs-status"></div>
 
-    <label>APIv3 Key <small>(free)</small></label>
-    <input id="f-ahrefs" type="password" placeholder="from app.ahrefs.com → Account → API keys" spellcheck="false">
+    <div class="field-group">
+      <label for="f-ahrefs">APIv3 Key <small>(free)</small></label>
+      <input id="f-ahrefs" type="password" placeholder="from app.ahrefs.com → Account → API keys" spellcheck="false">
+      <a class="field-link" href="https://app.ahrefs.com/account/api-keys" target="_blank" rel="noopener">↗ Generate free APIv3 key on Ahrefs</a>
+    </div>
 
     <div class="btnrow">
       <button id="b-save2" class="primary">Save</button>
@@ -51,8 +66,17 @@
     <div class="hint" id="ahrefs-hint"></div>
   </section>
 
+  <section id="sec-tech">
+    <h2>CMS / Framework <span class="tag">auto-detect</span></h2>
+    <div class="row-status" id="tech-status"><span class="ok">✓ built-in — no key needed</span></div>
+    <div class="btnrow">
+      <button id="b-test-tech">Test</button>
+    </div>
+    <div class="hint" id="tech-hint"></div>
+  </section>
+
   <section id="sec-rdap">
-    <h2>RDAP <span class="tag">site age</span></h2>
+    <h2>RDAP + WHOIS <span class="tag">site age</span></h2>
     <div class="row-status" id="rdap-status"></div>
     <div class="btnrow">
       <button id="b-test-rdap">Test</button>
@@ -60,17 +84,48 @@
     <div class="hint" id="rdap-hint"></div>
   </section>
 
+  <section id="sec-opr">
+    <h2>Open PageRank <span class="tag">traffic rank</span></h2>
+    <div class="row-status" id="opr-status"></div>
+    <div class="field-group">
+      <label for="f-opr">API-OPR Key <small>(free: 100k calls/mo)</small></label>
+      <input id="f-opr" type="password" placeholder="from openpagerank.com" spellcheck="false">
+      <a class="field-link" href="https://openpagerank.com/" target="_blank" rel="noopener">↗ Get free Open PageRank key (100k requests/mo)</a>
+    </div>
+    <div class="btnrow">
+      <button id="b-save3" class="primary">Save</button>
+      <button id="b-test-opr">Test</button>
+    </div>
+    <div class="hint" id="opr-hint"></div>
+  </section>
+
+  <section id="sec-moz">
+    <h2>Mozscape <span class="tag">Domain Authority</span></h2>
+    <div class="row-status" id="moz-status"></div>
+    <div class="field-group">
+      <label for="f-moz">Moz API Token <small>(optional free tier)</small></label>
+      <input id="f-moz" type="password" placeholder="from moz.com/api" spellcheck="false">
+      <a class="field-link" href="https://moz.com/api" target="_blank" rel="noopener">↗ Get free Moz API Token (DA & PA)</a>
+    </div>
+    <div class="btnrow">
+      <button id="b-save4" class="primary">Save</button>
+      <button id="b-test-moz">Test</button>
+    </div>
+    <div class="hint" id="moz-hint"></div>
+  </section>
+
   <section id="sec-cache">
-    <h2>Cache</h2>
+    <h2>Storage & Account</h2>
     <div class="hint" id="cache-info"></div>
     <div class="btnrow">
       <button id="b-clear-cache" class="danger">Clear cache</button>
-      <button id="b-disconnect" class="danger">Sign out Google</button>
+      <button id="b-disconnect" class="danger" title="Disconnect Google Ads authorization from extension">Disconnect Google Ads</button>
     </div>
+    <small class="field-note">"Disconnect Google Ads" clears the extension's saved OAuth token. It will NOT sign you out of your Google Account or Gmail.</small>
   </section>
 
   <footer>
-    <span>DR shown under license — <a href="https://ahrefs.com/" target="_blank" rel="noopener">Domain Rating by Ahrefs</a></span>
+    <span>KW Checker v0.2.2 · Competitive Intelligence</span>
     <span id="ver"></span>
   </footer>
 

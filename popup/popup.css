@@ -55,13 +55,38 @@ h2 {
   padding: 1px 6px;
 }
 
+.field-group {
+  margin-top: 8px;
+}
+
 label {
   display: block;
   font-size: 11px;
   color: #5f6368;
-  margin: 8px 0 3px;
+  margin: 0 0 3px;
 }
 label small { color: #9aa0a6; }
+
+.field-link {
+  display: inline-block;
+  font-size: 10px;
+  color: #1a73e8;
+  text-decoration: none;
+  margin-top: 3px;
+  padding: 1px 0;
+}
+.field-link:hover {
+  text-decoration: underline;
+  color: #174ea6;
+}
+
+.field-note {
+  display: block;
+  font-size: 10px;
+  color: #70757a;
+  margin-top: 6px;
+  line-height: 1.35;
+}
 
 input {
   width: 100%;

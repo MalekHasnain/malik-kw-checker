@@ -1,18 +1,26 @@
 # KW Checker
 
-Personal Chrome extension that shows **Keywords Everywhere-style data on Google results**:
+Personal Chrome extension that shows **SEO and competitive intelligence data on Google results**:
 
 - **Search volume, CPC, competition, 12-month trend** for the query you searched
 - **Related keywords table** (top ~20 ideas) with **CSV export**
-- Per-result badges: **Ahrefs Domain Rating** + **site age** (RDAP/WHOIS), placed on the header row right after the site name, in solid high-contrast pills (white bold text) with neon glow (DR tier-colored, cyan for age)
+- Per-result badges on the header row:
+  - **Ahrefs Domain Rating (DR)**
+  - **Moz Domain Authority (DA)** & Page Authority (PA)
+  - **Site Age** (RDAP + WHOIS fallback for ccTLDs/subdomains)
+  - **Global Traffic Rank** & PageRank (Open PageRank)
+  - **CMS / Framework** (WordPress, Shopify, Next.js, Webflow, etc.)
 
-All data sources are official and free for personal volumes:
+All data sources are free or offer generous free tiers:
 
 | Data | Source | Cost | Key needed |
 |---|---|---|---|
 | Volume / CPC / competition / ideas | Google Ads API `generateKeywordIdeas` | free | OAuth + developer token |
 | Domain Rating | Ahrefs `v3/public/domain-rating-free` | free | free APIv3 key |
-| Site age | RDAP (modern WHOIS) via rdap.org | free | none |
+| Site age | RDAP + WHOIS fallback | free | none |
+| CMS / Framework | Built-in head/meta detection | free | none |
+| Traffic Rank & PageRank | Open PageRank API (Keywords Everywhere) | free (100k calls/mo) | free API key |
+| Domain Authority (DA) | Mozscape API v2 | free tier | free Moz token |
 
 Attribution: Domain Rating by [Ahrefs](https://ahrefs.com/) (license: ahrefs.com/legal/domain-rating-license).
 
@@ -29,41 +37,29 @@ Attribution: Domain Rating by [Ahrefs](https://ahrefs.com/) (license: ahrefs.com
 kw-checker/
 ├── manifest.json              MV3; content script on Google SERPs (58 TLDs)
 ├── background/
-│   └── service-worker.js      message router; one analyze() call per SERP
+│   └── service-worker.js      message router; parallel analyze() pipeline
 ├── lib/
 │   ├── settings.js            chrome.storage.local settings
 │   ├── cache.js               TTL cache + negative caching (429 backoff)
 │   ├── oauth.js               Google OAuth 2.0, auth-code + PKCE via chrome.identity
 │   ├── google-ads.js          generateKeywordIdeas REST call (v25, configurable)
 │   ├── ahrefs.js              domain-rating-free + 24h cache + 429 backoff
-│   └── rdap.js                registration date + age formatting
+│   ├── rdap.js                subdomain normalization, RDAP + dual WHOIS fallback
+│   ├── tech-detect.js         CMS and frontend framework detection
+│   ├── traffic-rank.js        Open PageRank API (supports opr_live_ keys)
+│   └── moz.js                 Mozscape API v2 for DA and PA
 ├── content/
 │   ├── content.js             SERP widget + result badges + CSV export
-│   └── content.css            light/dark styles
-├── popup/                     settings UI, connect/test buttons
-└── icons/
+│   └── content.css            light/dark styles + color-coded pills
+├── popup/                     settings UI with direct links under each field
+└── icons/                     high-visibility KW extension icon
 ```
 
-### Caching (why API usage stays tiny)
+### Caching
 
-- Keyword metrics: **30 days** (Google refreshes monthly; the endpoint is rate-limited)
-- DR: **24 h** (DR changes slowly)
+- Keyword metrics: **30 days**
+- Traffic Rank: **30 days**
+- CMS / Framework: **7 days**
+- DR & Moz DA: **24 h**
 - Site age: **forever** (registration date never changes)
-- Errors/429: negative-cached 30 s–10 min so repeat visits don't hammer APIs
-
-At ~1,000 searches/month this keeps you far inside Google Ads' keyword-planning
-rate limits and Ahrefs' 60 req/min public-endpoint limit.
-
-### Known limitations
-
-- **Bucketed volumes**: without ad spend on the linked Ads account, Google returns
-  coarse buckets for low-volume keywords (e.g. "0–10"). This is a Google-side
-  restriction, same as Keyword Planner itself.
-- Basic-access developer token must be **approved** before the Google Ads API
-  accepts calls (usually a few days — the popup test button shows the exact error until then).
-- Google changes SERP markup occasionally; badge placement may need a selector
-  refresh after big redesigns.
-
-## Daily budget
-
-$0/month. All three sources are free within personal-use volumes and license terms.
+- Errors/429: negative-cached 5–10 min to avoid rate-limiting

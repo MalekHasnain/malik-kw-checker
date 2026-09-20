@@ -1,9 +1,7 @@
 // KW Checker — content script: injects keyword widget + domain badges on Google SERPs
 
 (() => {
-  if (window.__kwCheckerLoaded) return;
-  window.__kwCheckerLoaded = true;
-
+  // Per-query guard instead of global — allows re-injection on SPA navigation
   const url = new URL(location.href);
   const query = url.searchParams.get('q');
   if (!query || url.searchParams.has('tbm') // skip image/video/news tabs
@@ -11,7 +9,35 @@
     return;
   }
 
-  const send = (msg) => new Promise(resolve => chrome.runtime.sendMessage(msg, resolve));
+  // Avoid double-run for the same query in the same page context
+  if (window.__kwCheckerLastQuery === query) return;
+  window.__kwCheckerLastQuery = query;
+
+  // ---------- Messaging with retry (Bug 6: service worker sleep) ----------
+
+  async function send(msg, retries = 2) {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage(msg, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error(chrome.runtime.lastError.message));
+            } else {
+              resolve(response);
+            }
+          });
+        });
+        if (res !== undefined) return res;
+        // undefined response means service worker was waking up — retry
+      } catch {
+        // Extension context invalidated or similar — retry
+      }
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    return undefined; // all retries exhausted
+  }
 
   // ---------- DOM helpers ----------
 
@@ -37,11 +63,43 @@
     return out;
   }
 
+  // Bug 5: Wait for organic results to appear (lazy-loaded SERPs)
+  function waitForOrganics(timeoutMs = 3000) {
+    return new Promise(resolve => {
+      const results = collectOrganic();
+      if (results.length > 0) return resolve(results);
+
+      const observer = new MutationObserver(() => {
+        const results = collectOrganic();
+        if (results.length > 0) {
+          observer.disconnect();
+          clearTimeout(timer);
+          resolve(results);
+        }
+      });
+
+      observer.observe(document.body || document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+
+      const timer = setTimeout(() => {
+        observer.disconnect();
+        resolve(collectOrganic()); // return whatever we have, even if empty
+      }, timeoutMs);
+    });
+  }
+
+  // Bug 3: Improved mount point discovery with more fallbacks
   function mountPoint() {
     return document.getElementById('topstuff')
       || document.getElementById('appbar')
       || document.querySelector('#main #search')
-      || document.querySelector('#search');
+      || document.querySelector('#search')
+      || document.getElementById('rso')
+      || document.getElementById('center_col')
+      || document.getElementById('rcnt')
+      || document.querySelector('div.g');  // last resort: first organic result
   }
 
   // ---------- Widget ----------
@@ -82,7 +140,12 @@
       if (!mount) return;
       existing = document.createElement('div');
       existing.id = WIDGET_ID;
-      mount.insertAdjacentElement('afterend', existing);
+      // Insert before mount if it's an organic result, otherwise after
+      if (mount.classList?.contains('g')) {
+        mount.parentElement.insertBefore(existing, mount);
+      } else {
+        mount.insertAdjacentElement('afterend', existing);
+      }
     }
 
     if (error) {
@@ -109,8 +172,8 @@
         <div class="kwc-head">
           <span class="kwc-logo">KW</span>
           <span class="kwc-title">Checker</span>
-          <span class="kwc-query">“${esc(query)}”</span>
-          <button class="kwc-toggle" id="kwc-toggle" title="Related keywords">Related ▾</button>
+          <span class="kwc-query">\u201C${esc(query)}\u201D</span>
+          <button class="kwc-toggle" id="kwc-toggle" title="Related keywords">Related \u25BE</button>
         </div>
         <div class="kwc-metrics">
           <div class="kwc-metric"><label>Volume</label><b>${e ? fmtVol(e.volume) : '—'}</b></div>
@@ -157,6 +220,13 @@
     return 'kwc-dr-low';
   }
 
+  function daClass(da) {
+    if (da === null) return 'kwc-da-none';
+    if (da >= 60) return 'kwc-da-high';
+    if (da >= 30) return 'kwc-da-mid';
+    return 'kwc-da-low';
+  }
+
   // The site name in the result header row, e.g. "Canva" next to the favicon.
   // Current markup: <span class="VuuXrf">. Fallbacks: small h3, favicon sibling.
   function findSiteName(container) {
@@ -177,12 +247,35 @@
       badge.dataset.host = host;
       const dr = info ? info.dr : null;
       const age = info ? info.age : null;
-      badge.innerHTML = `
+
+      let pills = `
         <span class="kwc-dr ${drClass(dr)}" title="${info?.drError ? esc(info.drError) : 'Domain Rating by Ahrefs'}">DR ${dr ?? '?'}</span>
-        <span class="kwc-age" title="${info?.registered ? 'Registered ' + esc(info.registered) : (info?.ageError ? esc(info.ageError) : 'Site age (RDAP)')}">${age ?? '?'}</span>`;
+        <span class="kwc-age" title="${info?.registered ? 'Registered ' + esc(info.registered) : (info?.ageError ? esc(info.ageError) : 'Site age')}">${age ?? '?'}</span>`;
+
+      if (info?.da != null) {
+        pills += `<span class="kwc-da ${daClass(info.da)}" title="Domain Authority by Moz (PA ${info.pa ?? 'n/a'})">DA ${info.da}</span>`;
+      }
+      if (info?.rank) {
+        pills += `<span class="kwc-rank" title="Global Traffic Rank: ${esc(info.rank)}${info.pageRank ? ' · PageRank ' + esc(info.pageRank) : ''}">${esc(info.rank)}</span>`;
+      }
+      if (info?.framework) {
+        pills += `<span class="kwc-tech" title="CMS / Framework: ${esc(info.framework)}">${esc(info.framework)}</span>`;
+      }
+
+      badge.innerHTML = pills;
+
       badge.addEventListener('click', ev => {
         ev.preventDefault(); ev.stopPropagation();
-        alert(`${host}\nDR: ${dr ?? 'n/a'}${info?.drError ? ' (' + info.drError + ')' : ''}\nAge: ${age ?? 'n/a'}${info?.registered ? ' — registered ' + info.registered : ''}`);
+        const details = [
+          `Domain: ${host}`,
+          `------------------------------`,
+          `Ahrefs DR: ${dr ?? 'n/a'}${info?.drError ? ' (' + info.drError + ')' : ''}`,
+          info?.da != null ? `Moz DA: ${info.da} (PA: ${info.pa ?? 'n/a'})` : null,
+          `Site Age: ${age ?? 'n/a'}${info?.registered ? ' — registered ' + info.registered.slice(0, 10) : ''}`,
+          info?.rank ? `Traffic Rank: ${info.rank}${info?.pageRank ? ' (PageRank: ' + info.pageRank + ')' : ''}` : null,
+          info?.framework ? `CMS / Framework: ${info.framework}` : null
+        ].filter(Boolean).join('\n');
+        alert(details);
       });
       // Placement: on the header row, immediately after the site name ("after Canva")
       badge.classList.add('kwc-inline');
@@ -204,13 +297,24 @@
     }
   }
 
+  // ---------- Cleanup old widget on re-run ----------
+
+  function cleanup() {
+    const oldWidget = document.getElementById(WIDGET_ID);
+    if (oldWidget) oldWidget.remove();
+    document.querySelectorAll('.kwc-badge').forEach(b => b.remove());
+  }
+
   // ---------- Main ----------
 
   async function run() {
-    // Placeholder widget immediately so it's clear the extension is active
-    renderWidget(null, 'loading…');
+    cleanup();
 
-    const organics = collectOrganic();
+    // Placeholder widget immediately so it's clear the extension is active
+    renderWidget(null, 'loading\u2026');
+
+    // Bug 5: Wait for organic results with MutationObserver retry
+    const organics = await waitForOrganics(3000);
     const domains = organics.map(o => o.host);
 
     const res = await send({ type: 'kw:analyze', q: query, domains });
@@ -224,15 +328,22 @@
     renderBadges(organics, res.domains || {});
   }
 
-  // Google is an SPA-ish page; watch for url changes (pagination etc.)
+  // Bug 4: SPA navigation detection — watch for url changes (pagination etc.)
+  // Use both setInterval and popstate for comprehensive coverage
   let lastQ = query;
-  setInterval(() => {
+
+  function checkNavigation() {
     const q = new URL(location.href).searchParams.get('q');
-    if (q !== lastQ) {
+    if (q && q !== lastQ) {
       lastQ = q;
-      if (q) location.reload(); // simplest correct behavior across Google's dynamic SERPs
+      window.__kwCheckerLastQuery = null; // reset per-query guard
+      location.reload(); // simplest correct behavior across Google's dynamic SERPs
     }
-  }, 1000);
+  }
+
+  setInterval(checkNavigation, 1000);
+  window.addEventListener('popstate', checkNavigation);
+  window.addEventListener('hashchange', checkNavigation);
 
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     run();
