@@ -3,71 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KW Checker</title>
+  <title>Malik Kw Checker</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <header class="hero">
-    <div class="brand-row"><span class="logo">KW</span><div><h1>KW Checker</h1><p>YOUR SEARCH ADVANTAGE</p></div><span id="status-pill" class="pill pill-warn" role="status">Loading…</span></div>
+    <div class="brand-row"><span class="logo">KW</span><div><h1>Malik Kw Checker</h1><p>YOUR SEARCH ADVANTAGE</p></div><span id="status-pill" class="pill pill-warn" role="status">Loading…</span></div>
     <div class="creator"><span class="avatar">MH</span><span>Made by <a href="https://www.facebook.com/MalikHasnain22/" target="_blank" rel="noopener noreferrer">Malik Hasnain ↗</a></span></div>
   </header>
   <main>
-    <div class="intro"><span class="eyebrow">WORKSPACE</span><h2>Small tool. Sharper insights.</h2><p>Connect your data sources, then explore keywords and websites right on Google.</p></div>
+    <div class="intro"><span class="eyebrow">WORKSPACE</span><h2>Small tool. Sharper insights.</h2><p>Connect your data sources, then explore domain strength and site age right on Google.</p></div>
     <details class="install-guide"><summary>New here? Install & get started <span>↓</span></summary><div class="card-body">
       <ol>
-        <li>Open the <a href="https://github.com/MalekHasnain/kw-checker" target="_blank" rel="noopener">GitHub repository</a> and choose <strong>Code → Download ZIP</strong>.</li>
+        <li>Open the <a href="https://github.com/MalekHasnain/malik-kw-checker" target="_blank" rel="noopener">GitHub repository</a> and choose <strong>Code → Download ZIP</strong>.</li>
         <li>Extract the ZIP to a permanent folder.</li>
         <li>Enter <code>chrome://extensions</code> in Chrome and turn on <strong>Developer mode</strong>.</li>
         <li>Click <strong>Load unpacked</strong>. Select the extracted folder containing <code>manifest.json</code>.</li>
-        <li>Pin KW Checker from Chrome’s puzzle menu. Add credentials below, save, and connect Google.</li>
-      </ol><p class="field-note">Already installed? You’re ready to configure your sources. Site age and technology detection need no API key.</p>
-      <a class="field-link" href="https://github.com/MalekHasnain/kw-checker/blob/main/CREDENTIALS.md" target="_blank" rel="noopener">Open the credentials guide ↗</a>
+        <li>Pin Malik Kw Checker from Chrome’s puzzle menu. Add your Ahrefs key below and save.</li>
+      </ol><p class="field-note">Already installed? You’re ready to configure your sources. Site Age needs no API key.</p>
+      <a class="field-link" href="https://github.com/MalekHasnain/malik-kw-checker/blob/main/CREDENTIALS.md" target="_blank" rel="noopener">Open the credentials guide ↗</a>
     </div></details>
     <div class="section-label">DATA SOURCES <span>Configure only what you need</span></div>
-  <details id="sec-google" class="source-card" open><summary>Google Ads API <span class="tag">keyword data</span></summary><div class="card-body">
 
-    <div class="row-status" id="google-status"></div>
 
-    <div class="field-group">
-      <label for="f-clientid">OAuth Client ID <small>(Web application)</small></label>
-      <input id="f-clientid" type="text" placeholder="1234-abc.apps.googleusercontent.com" spellcheck="false">
-      <a class="field-link" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">↗ Get OAuth Client ID (Google Cloud Console)</a>
-    </div>
-
-    <div class="field-group">
-      <label for="f-devtoken">Developer Token</label>
-      <input id="f-devtoken" type="password" placeholder="from Ads account → API Center" spellcheck="false">
-      <a class="field-link" href="https://ads.google.com/aw/apicenter" target="_blank" rel="noopener">↗ Get Developer Token (Google Ads API Center)</a>
-    </div>
-
-    <div class="field-group">
-      <label for="f-customerid">Customer ID</label>
-      <input id="f-customerid" type="text" placeholder="123-456-7890">
-      <a class="field-link" href="https://ads.google.com/" target="_blank" rel="noopener">↗ Find 10-digit CID at top-right of Google Ads</a>
-    </div>
-
-    <div class="field-group">
-      <label for="f-logincid">Login Customer ID <small>(manager account only)</small></label>
-      <input id="f-logincid" type="text" placeholder="manager account CID — optional">
-      <a class="field-link" href="https://ads.google.com/home/tools/manager-accounts/" target="_blank" rel="noopener">↗ Create / View Manager Account (MCC)</a>
-    </div>
-
-    <div class="btnrow">
-      <button id="b-save" class="primary">Save settings</button>
-      <button id="b-connect">Connect Google</button>
-      <button id="b-test-google">Test connection</button>
-    </div>
-    <div role="status" aria-live="polite" class="hint" id="google-hint"></div>
-</div></details>
-
-  <details id="sec-ahrefs" class="source-card"><summary>Ahrefs <span class="tag">Domain Rating</span></summary><div class="card-body">
+  <details id="sec-ahrefs" class="source-card" open><summary>Ahrefs <span class="tag">Domain Rating</span></summary><div class="card-body">
 
     <div class="row-status" id="ahrefs-status"></div>
 
     <div class="field-group">
-      <label for="f-ahrefs">APIv3 Key <small>(free)</small></label>
+      <label for="f-ahrefs">APIv3 Key <small>(required for DR)</small></label>
       <input id="f-ahrefs" type="password" placeholder="from app.ahrefs.com → Account → API keys" spellcheck="false">
-      <a class="field-link" href="https://app.ahrefs.com/account/api-keys" target="_blank" rel="noopener">↗ Generate free APIv3 key on Ahrefs</a>
+      <a class="field-link" href="https://app.ahrefs.com/account/api-keys" target="_blank" rel="noopener">↗ Get an APIv3 key on Ahrefs</a>
     </div>
 
     <div class="btnrow">
@@ -77,15 +43,9 @@
     <div role="status" aria-live="polite" class="hint" id="ahrefs-hint"></div>
 </div></details>
 
-  <details id="sec-tech" class="source-card"><summary>CMS / Framework <span class="tag">auto-detect</span></summary><div class="card-body">
-    <div class="row-status" id="tech-status"><span class="ok">✓ built-in — no key needed</span></div>
-    <div class="btnrow">
-      <button id="b-test-tech">Test connection</button>
-    </div>
-    <div role="status" aria-live="polite" class="hint" id="tech-hint"></div>
-</div></details>
 
-  <details id="sec-rdap" class="source-card"><summary>RDAP + WHOIS <span class="tag">site age</span></summary><div class="card-body">
+
+  <details id="sec-rdap" class="source-card"><summary>Site Age <span class="tag">RDAP + WHOIS</span></summary><div class="card-body">
     <div class="row-status" id="rdap-status"></div>
     <div class="btnrow">
       <button id="b-test-rdap">Test connection</button>
@@ -93,45 +53,15 @@
     <div role="status" aria-live="polite" class="hint" id="rdap-hint"></div>
 </div></details>
 
-  <details id="sec-opr" class="source-card"><summary>Open PageRank <span class="tag">traffic rank</span></summary><div class="card-body">
-    <div class="row-status" id="opr-status"></div>
-    <div class="field-group">
-      <label for="f-opr">API-OPR Key <small>(free: 100k calls/mo)</small></label>
-      <input id="f-opr" type="password" placeholder="from openpagerank.com" spellcheck="false">
-      <a class="field-link" href="https://openpagerank.com/" target="_blank" rel="noopener">↗ Get free Open PageRank key (100k requests/mo)</a>
-    </div>
-    <div class="btnrow">
-      <button id="b-save3" class="primary">Save settings</button>
-      <button id="b-test-opr">Test connection</button>
-    </div>
-    <div role="status" aria-live="polite" class="hint" id="opr-hint"></div>
-</div></details>
 
-  <details id="sec-moz" class="source-card"><summary>Mozscape <span class="tag">Domain Authority</span></summary><div class="card-body">
-    <div class="row-status" id="moz-status"></div>
-    <div class="field-group">
-      <label for="f-moz">Moz API Token <small>(optional free tier)</small></label>
-      <input id="f-moz" type="password" placeholder="from moz.com/api" spellcheck="false">
-      <a class="field-link" href="https://moz.com/api" target="_blank" rel="noopener">↗ Get free Moz API Token (DA & PA)</a>
-    </div>
-    <div class="btnrow">
-      <button id="b-save4" class="primary">Save settings</button>
-      <button id="b-test-moz">Test connection</button>
-    </div>
-    <div role="status" aria-live="polite" class="hint" id="moz-hint"></div>
-</div></details>
 
-  <details id="sec-cache" class="source-card"><summary>Storage & Account</summary><div class="card-body">
-    <div role="status" aria-live="polite" class="hint" id="cache-info"></div>
-    <div class="btnrow">
-      <button id="b-clear-cache" class="danger">Clear cache</button>
-      <button id="b-disconnect" class="danger" title="Disconnect Google Ads authorization from extension">Disconnect Google Ads</button>
-    </div>
-    <small class="field-note">"Disconnect Google Ads" clears the extension's saved OAuth token. It will NOT sign you out of your Google Account or Gmail.</small>
-</div></details>
 
+
+
+
+    <details class="source-card"><summary>Storage <span class="tag">local cache</span></summary><div class="card-body"><div id="cache-info" class="hint" role="status"></div><div class="btnrow"><button id="b-clear-cache">Clear cache</button></div></div></details>
   </main>
-  <footer><div><strong>Built for curious marketers.</strong><span>KW Checker · <span id="ver"></span></span></div><a href="https://www.facebook.com/MalikHasnain22/" target="_blank" rel="noopener noreferrer">Connect on Facebook ↗</a></footer>
+  <footer><div><strong>Built for curious marketers.</strong><span>Malik Kw Checker · <span id="ver"></span></span></div><a href="https://www.facebook.com/MalikHasnain22/" target="_blank" rel="noopener noreferrer">Connect on Facebook ↗</a></footer>
 
   <script src="popup.js"></script>
 </body>

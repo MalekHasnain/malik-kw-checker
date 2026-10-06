@@ -102,118 +102,22 @@
       || document.querySelector('div.g');  // last resort: first organic result
   }
 
-  // ---------- Widget ----------
-
   const WIDGET_ID = 'kw-checker-widget';
-
-  function fmtVol(n) {
-    if (n === null || n === undefined) return '—';
-    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    return String(n);
-  }
-
-  function fmtCents(c) {
-    if (c === null || c === undefined) return '—';
-    if (c >= 100) return '$' + (c / 100).toFixed(2);
-    return String(c) + '\u00A2';
-  }
-
-  function sparkline(trend) {
-    const pts = (trend || []).filter(t => t.searches !== null).map(t => t.searches);
-    if (pts.length < 2) return '';
-    const max = Math.max(...pts, 1);
-    const w = 150, h = 28;
-    const step = w / (pts.length - 1);
-    const path = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${(i * step).toFixed(1)},${(h - (p / max) * (h - 3) - 1.5).toFixed(1)}`).join(' ');
-    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="kwc-spark"><path d="${path}" fill="none" stroke="#1a73e8" stroke-width="1.5"/></svg>`;
-  }
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  function renderWidget(keyword, error) {
-    let existing = document.getElementById(WIDGET_ID);
-    if (!existing) {
+  function renderWidget(message) {
+    let widget = document.getElementById(WIDGET_ID);
+    if (!widget) {
       const mount = mountPoint();
       if (!mount) return;
-      existing = document.createElement('div');
-      existing.id = WIDGET_ID;
-      // Insert before mount if it's an organic result, otherwise after
-      if (mount.classList?.contains('g')) {
-        mount.parentElement.insertBefore(existing, mount);
-      } else {
-        mount.insertAdjacentElement('afterend', existing);
-      }
+      widget = document.createElement('div');
+      widget.id = WIDGET_ID;
+      mount.insertAdjacentElement(mount.classList?.contains('g') ? 'beforebegin' : 'afterend', widget);
     }
-
-    if (error) {
-      existing.innerHTML = `
-        <div class="kwc-card kwc-error">
-          <span class="kwc-logo">KW</span>
-          <span>Keyword data unavailable: ${esc(error)}</span>
-        </div>`;
-      return;
-    }
-
-    const e = keyword?.exact;
-    const ideas = (keyword?.ideas || []).slice(0, 20);
-    const rows = ideas.map(i => `
-      <tr>
-        <td class="kwc-kw">${esc(i.keyword)}</td>
-        <td>${fmtVol(i.volume)}</td>
-        <td>${i.cpcHighCents !== null ? fmtCents(i.cpcLowCents) + ' – ' + fmtCents(i.cpcHighCents) : '—'}</td>
-        <td>${esc(i.competition)}</td>
-      </tr>`).join('');
-
-    existing.innerHTML = `
-      <div class="kwc-card">
-        <div class="kwc-head">
-          <span class="kwc-logo">KW</span>
-          <span class="kwc-title">Checker</span>
-          <span class="kwc-query">\u201C${esc(query)}\u201D</span>
-          <button class="kwc-toggle" id="kwc-toggle" title="Related keywords" aria-expanded="false" aria-controls="kwc-tablewrap">Related \u25BE</button>
-        </div>
-        <div class="kwc-metrics">
-          <div class="kwc-metric"><label>Volume</label><b>${e ? fmtVol(e.volume) : '—'}</b></div>
-          <div class="kwc-metric"><label>CPC (top)</label><b>${e ? (e.cpcHighCents !== null ? fmtCents(e.cpcLowCents) + ' – ' + fmtCents(e.cpcHighCents) : '—') : '—'}</b></div>
-          <div class="kwc-metric"><label>Competition</label><b>${e ? esc(e.competition) : '—'}</b></div>
-          <div class="kwc-metric kwc-trend"><label>12-mo</label>${e ? sparkline(e.trend) : '—'}</div>
-        </div>
-        <div class="kwc-tablewrap" id="kwc-tablewrap" hidden>
-          <table class="kwc-table">
-            <thead><tr><th>Keyword</th><th>Vol</th><th>CPC</th><th>Comp</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <button class="kwc-csv" id="kwc-csv">Export CSV</button>
-        </div>
-        <div class="kwc-foot">
-          <span>By <a href="https://www.facebook.com/MalikHasnain22/" target="_blank" rel="noopener noreferrer">Malik Hasnain ↗</a> · Google Ads data</span>
-          <span>Domain Rating by <a href="https://ahrefs.com/" target="_blank" rel="noopener">Ahrefs</a></span>
-        </div>
-      </div>`;
-
-    document.getElementById('kwc-toggle')?.addEventListener('click', () => {
-      const wrap = document.getElementById('kwc-tablewrap');
-      if (wrap) {
-        wrap.hidden = !wrap.hidden;
-        const toggle = document.getElementById('kwc-toggle');
-        toggle.setAttribute('aria-expanded', String(!wrap.hidden));
-        toggle.textContent = wrap.hidden ? 'Related ▾' : 'Related ▴';
-      }
-    });
-    document.getElementById('kwc-csv')?.addEventListener('click', () => {
-      const csv = ['Keyword,Volume,CPC Low (cents),CPC High (cents),Competition']
-        .concat(ideas.map(i => `"${i.keyword.replace(/"/g, '""')}",${i.volume ?? ''},${i.cpcLowCents ?? ''},${i.cpcHighCents ?? ''},${i.competition}`))
-        .join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `kw-checker-${query.replace(/[^\w]+/g, '-').slice(0, 40)}.csv`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    });
+    widget.innerHTML = `<div class="kwc-card"><div class="kwc-head"><span class="kwc-logo">KW</span><span class="kwc-title">Malik Kw Checker</span><span class="kwc-query">Ahrefs DR · Site Age</span></div><div class="kwc-status" role="status">${esc(message)}</div><div class="kwc-foot"><span>By <a href="https://www.facebook.com/MalikHasnain22/" target="_blank" rel="noopener noreferrer">Malik Hasnain ↗</a></span><span>Domain Rating by <a href="https://ahrefs.com/" target="_blank" rel="noopener">Ahrefs</a></span></div></div>`;
   }
 
   // ---------- Result badges ----------
@@ -223,13 +127,6 @@
     if (dr >= 60) return 'kwc-dr-high';
     if (dr >= 30) return 'kwc-dr-mid';
     return 'kwc-dr-low';
-  }
-
-  function daClass(da) {
-    if (da === null) return 'kwc-da-none';
-    if (da >= 60) return 'kwc-da-high';
-    if (da >= 30) return 'kwc-da-mid';
-    return 'kwc-da-low';
   }
 
   // The site name in the result header row, e.g. "Canva" next to the favicon.
@@ -254,18 +151,8 @@
       const age = info ? info.age : null;
 
       let pills = `
-        <span class="kwc-dr ${drClass(dr)}" title="${info?.drError ? esc(info.drError) : 'Domain Rating by Ahrefs'}">DR ${dr ?? '?'}</span>
-        <span class="kwc-age" title="${info?.registered ? 'Registered ' + esc(info.registered) : (info?.ageError ? esc(info.ageError) : 'Site age')}">${age ?? '?'}</span>`;
-
-      if (info?.da != null) {
-        pills += `<span class="kwc-da ${daClass(info.da)}" title="Domain Authority by Moz (PA ${info.pa ?? 'n/a'})">DA ${info.da}</span>`;
-      }
-      if (info?.rank) {
-        pills += `<span class="kwc-rank" title="Global Traffic Rank: ${esc(info.rank)}${info.pageRank ? ' · PageRank ' + esc(info.pageRank) : ''}">${esc(info.rank)}</span>`;
-      }
-      if (info?.framework) {
-        pills += `<span class="kwc-tech" title="CMS / Framework: ${esc(info.framework)}">${esc(info.framework)}</span>`;
-      }
+        <span class="kwc-dr ${drClass(dr)}" title="${info?.drError ? esc(info.drError) : 'Domain Rating by Ahrefs'}">DR ${dr ?? '—'}</span>
+        <span class="kwc-age" title="${info?.registered ? 'Registered ' + esc(info.registered) : (info?.ageError ? esc(info.ageError) : 'Site age')}">Age ${age != null ? esc(age) : '—'}</span>`;
 
       badge.innerHTML = pills;
 
@@ -275,10 +162,7 @@
           `Domain: ${host}`,
           `------------------------------`,
           `Ahrefs DR: ${dr ?? 'n/a'}${info?.drError ? ' (' + info.drError + ')' : ''}`,
-          info?.da != null ? `Moz DA: ${info.da} (PA: ${info.pa ?? 'n/a'})` : null,
           `Site Age: ${age ?? 'n/a'}${info?.registered ? ' — registered ' + info.registered.slice(0, 10) : ''}`,
-          info?.rank ? `Traffic Rank: ${info.rank}${info?.pageRank ? ' (PageRank: ' + info.pageRank + ')' : ''}` : null,
-          info?.framework ? `CMS / Framework: ${info.framework}` : null
         ].filter(Boolean).join('\n');
         alert(details);
       });
@@ -316,7 +200,7 @@
     cleanup();
 
     // Placeholder widget immediately so it's clear the extension is active
-    renderWidget(null, 'loading\u2026');
+    renderWidget('Checking domain ratings and site ages…');
 
     // Bug 5: Wait for organic results with MutationObserver retry
     const organics = await waitForOrganics(3000);
@@ -325,11 +209,11 @@
     const res = await send({ type: 'kw:analyze', q: query, domains });
 
     if (!res || !res.ok) {
-      renderWidget(null, res?.error || 'background error');
+      renderWidget(res?.error || 'Unable to load domain data. Reopen the extension and try again.');
       return;
     }
 
-    renderWidget(res.keyword, res.keywordError);
+    renderWidget(organics.length ? 'Domain insights appear beside each search result. Hover over a badge for details.' : 'No supported search results found on this page.');
     renderBadges(organics, res.domains || {});
   }
 

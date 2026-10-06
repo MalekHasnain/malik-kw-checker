@@ -1,141 +1,56 @@
-// KW Checker — popup
-
 const $ = id => document.getElementById(id);
-const send = msg => new Promise(resolve => {
-  chrome.runtime.sendMessage(msg, response => {
-    const error = chrome.runtime.lastError;
-    resolve(error ? { ok: false, error: error.message } : response);
-  });
-});
-
-function setHint(id, text, isError) {
-  const el = $(id);
-  if (!el) return;
-  el.textContent = text || '';
-  el.className = 'hint' + (isError ? ' err' : '');
+const send = msg => new Promise(resolve => chrome.runtime.sendMessage(msg, result => {
+  const error = chrome.runtime.lastError;
+  resolve(error ? { ok: false, error: error.message } : result);
+}));
+function hint(id, text, error = false) {
+  $(id).textContent = text;
+  $(id).className = 'hint' + (error ? ' err' : '');
 }
-
 async function refresh() {
-  const st = await send({ type: 'kw:status' });
-  if (!st?.ok) { $('status-pill').textContent = 'Unavailable'; $('status-pill').className = 'pill pill-warn'; setHint('google-hint', st?.error || 'Unable to load settings. Reopen the extension and try again.', true); return; }
-
-  const s = st.settings;
-  $('f-clientid').value = s.googleClientId || '';
-  $('f-devtoken').placeholder = s.developerToken ? '•••• (saved — retype to change)' : 'from Ads account → API Center';
-  $('f-customerid').value = s.customerId || '';
-  $('f-logincid').value = s.loginCustomerId || '';
-  $('f-ahrefs').placeholder = s.ahrefsKey ? '•••• (saved — retype to change)' : 'from app.ahrefs.com → Account → API keys';
-  $('f-opr').placeholder = s.openPageRankKey ? '•••• (saved — retype to change)' : 'from openpagerank.com';
-  $('f-moz').placeholder = s.mozToken ? '•••• (saved — retype to change)' : 'from moz.com/api';
-
-  const pill = $('status-pill');
-  if (st.googleConfigured && st.googleSignedIn && st.ahrefsConfigured) {
-    pill.textContent = 'ready'; pill.className = 'pill pill-ok';
-  } else {
-    pill.textContent = 'setup needed'; pill.className = 'pill pill-warn';
-  }
-
-  $('google-status').innerHTML = st.googleConfigured
-    ? (st.googleSignedIn ? '<span class="ok">✓ configured & connected</span>' : '<span class="warn">configured — not connected</span>')
-    : '<span class="warn">not configured</span>';
-  $('ahrefs-status').innerHTML = st.ahrefsConfigured
-    ? '<span class="ok">✓ key saved</span>'
-    : '<span class="warn">no key</span>';
-  $('rdap-status').innerHTML = '<span class="ok">✓ no key needed</span>';
-  $('tech-status').innerHTML = '<span class="ok">✓ built-in — no key needed</span>';
-  $('opr-status').innerHTML = st.openPageRankConfigured
-    ? '<span class="ok">✓ key saved</span>'
-    : '<span class="warn">optional — no key</span>';
-  $('moz-status').innerHTML = st.mozConfigured
-    ? '<span class="ok">✓ token saved</span>'
-    : '<span class="warn">optional — no token</span>';
-
-  const c = st.cache;
-  $('cache-info').textContent = c ? `${c.keywordCache} keyword · ${c.drCache} DR · ${c.ageCache} age entries cached` : '';
-
   $('ver').textContent = 'v' + chrome.runtime.getManifest().version;
-}
-
-async function save() {
-  const patch = {
-    googleClientId: $('f-clientid').value.trim(),
-    customerId: $('f-customerid').value.trim(),
-    loginCustomerId: $('f-logincid').value.trim()
-  };
-  if ($('f-devtoken').value.trim()) patch.developerToken = $('f-devtoken').value.trim();
-  if ($('f-ahrefs').value.trim()) patch.ahrefsKey = $('f-ahrefs').value.trim();
-  if ($('f-opr').value.trim()) patch.openPageRankKey = $('f-opr').value.trim();
-  if ($('f-moz').value.trim()) patch.mozToken = $('f-moz').value.trim();
-
-  const result = await send({ type: 'kw:saveSettings', patch });
-  if (!result?.ok) {
-    for (const id of ['google-hint', 'ahrefs-hint', 'opr-hint', 'moz-hint']) {
-      setHint(id, result?.error || 'Could not save settings. Please try again.', true);
-    }
+  const status = await send({ type: 'kw:status' });
+  if (!status?.ok) {
+    $('status-pill').textContent = 'Unavailable';
+    hint('ahrefs-hint', status?.error || 'Could not load settings. Reopen the extension.', true);
     return;
   }
-  for (const id of ['f-devtoken', 'f-ahrefs', 'f-opr', 'f-moz']) $(id).value = '';
-  setHint('google-hint', 'Saved.');
-  setHint('ahrefs-hint', 'Saved.');
-  setHint('opr-hint', 'Saved.');
-  setHint('moz-hint', 'Saved.');
-  refresh();
+  $('status-pill').textContent = status.ahrefsConfigured ? 'Ready' : 'Add DR key';
+  $('status-pill').className = 'pill ' + (status.ahrefsConfigured ? 'pill-ok' : 'pill-warn');
+  $('f-ahrefs').placeholder = status.ahrefsConfigured ? '•••• (saved — retype to change)' : 'Paste your Ahrefs APIv3 key';
+  $('ahrefs-status').innerHTML = status.ahrefsConfigured ? '<span class="ok">✓ API key saved</span>' : '<span class="warn">Add your API key to enable Domain Rating</span>';
+  $('rdap-status').innerHTML = '<span class="ok">✓ Ready — no key needed</span>';
+  $('cache-info').textContent = `${status.cache?.drCache || 0} DR · ${status.cache?.ageCache || 0} site age entries cached`;
 }
-
-async function connect() {
-  setHint('google-hint', 'Opening Google sign-in…');
-  const r = await send({ type: 'kw:connect' });
-  if (r?.ok) { setHint('google-hint', 'Connected ✓'); refresh(); }
-  else setHint('google-hint', r?.error || 'failed', true);
+async function action(button, hintId, job) {
+  button.disabled = true;
+  try { await job(); } catch (error) { hint(hintId, error.message, true); }
+  finally { button.disabled = false; }
 }
-
-async function runTest(kind, hintId) {
-  setHint(hintId, 'Testing…');
-  const r = await send({ type: kind });
-  if (r?.ok) {
-    const res = r.result;
-    let txt = '✓ works';
-    if (kind === 'kw:testGoogle' && res) txt = `✓ “${res.keyword}” vol ${res.volume ?? '—'} / ${res.competition}`;
-    if (kind === 'kw:testAhrefs' && res) txt = `✓ ahrefs.com DR ${res.dr}`;
-    if (kind === 'kw:testRdap' && res) txt = `✓ google.com age ${res.age} (registered ${res.registered.slice(0, 10)})`;
-    if (kind === 'kw:testTech' && res) txt = `✓ shopify.com detected: ${res.framework || 'Shopify'}`;
-    if (kind === 'kw:testOpenPageRank' && res) txt = `✓ google.com Rank ${res.rank || 'n/a'} (PR ${res.pageRank || 'n/a'})`;
-    if (kind === 'kw:testMoz' && res) txt = `✓ moz.com DA ${res.da} (PA ${res.pa})`;
-    setHint(hintId, txt);
-  } else {
-    setHint(hintId, r?.error || 'failed', true);
-  }
+$('b-save2').addEventListener('click', e => action(e.currentTarget, 'ahrefs-hint', async () => {
+  const key = $('f-ahrefs').value.trim();
+  if (!key) return hint('ahrefs-hint', 'Enter a key to save or replace it. Your saved key is unchanged.');
+  const result = await send({ type: 'kw:saveSettings', patch: { ahrefsKey: key } });
+  if (!result?.ok) return hint('ahrefs-hint', result?.error || 'Could not save the key.', true);
+  $('f-ahrefs').value = '';
+  await refresh();
+  hint('ahrefs-hint', 'Saved. You can now test your connection.');
+}));
+for (const [id, type, hintId] of [['b-test-ahrefs', 'kw:testAhrefs', 'ahrefs-hint'], ['b-test-rdap', 'kw:testRdap', 'rdap-hint']]) {
+  $(id).addEventListener('click', e => action(e.currentTarget, hintId, async () => {
+    hint(hintId, 'Testing…');
+    const result = await send({ type });
+    if (!result?.ok) return hint(hintId, result?.error || 'Test failed. Try again.', true);
+    hint(hintId, type === 'kw:testAhrefs' ? `✓ ahrefs.com DR ${result.result.dr}` : `✓ google.com age ${result.result.age}`);
+  }));
 }
-
-$('b-save')?.addEventListener('click', save);
-$('b-save2')?.addEventListener('click', save);
-$('b-save3')?.addEventListener('click', save);
-$('b-save4')?.addEventListener('click', save);
-
-$('b-connect')?.addEventListener('click', connect);
-$('b-test-google')?.addEventListener('click', () => runTest('kw:testGoogle', 'google-hint'));
-$('b-test-ahrefs')?.addEventListener('click', () => runTest('kw:testAhrefs', 'ahrefs-hint'));
-$('b-test-tech')?.addEventListener('click', () => runTest('kw:testTech', 'tech-hint'));
-$('b-test-rdap')?.addEventListener('click', () => runTest('kw:testRdap', 'rdap-hint'));
-$('b-test-opr')?.addEventListener('click', () => runTest('kw:testOpenPageRank', 'opr-hint'));
-$('b-test-moz')?.addEventListener('click', () => runTest('kw:testMoz', 'moz-hint'));
-
-$('b-clear-cache')?.addEventListener('click', async () => {
-  await send({ type: 'kw:clearCache' });
-  setHint('cache-info', 'Cache cleared.');
-  refresh();
-});
-$('b-disconnect')?.addEventListener('click', async () => {
-  await send({ type: 'kw:disconnect' });
-  refresh();
-});
-
-// Ensure all external links open cleanly in a new browser tab
-document.querySelectorAll('a[href]').forEach(a => {
-  a.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (a.href) chrome.tabs.create({ url: a.href });
-  });
-});
-
+$('b-clear-cache').addEventListener('click', e => action(e.currentTarget, 'cache-info', async () => {
+  const result = await send({ type: 'kw:clearCache' });
+  if (!result?.ok) return hint('cache-info', result?.error || 'Could not clear cache.', true);
+  await refresh();
+  hint('cache-info', 'Cache cleared. Fresh data will load on your next Google search.');
+}));
+document.querySelectorAll('a[href]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault(); chrome.tabs.create({ url: a.href });
+}));
 refresh();

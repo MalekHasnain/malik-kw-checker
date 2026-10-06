@@ -6,7 +6,7 @@ a:hover { text-decoration:underline; }
 .hero { padding:22px 20px 16px; color:white; background:radial-gradient(ellipse at top right,#15545c,transparent 75%),#122b3b; }
 .brand-row { display:flex; align-items:center; gap:10px; }
 .logo { display:grid; place-items:center; width:43px; height:43px; border:1px solid #6ae2c7; border-radius:13px; background:#b7f7df; color:#143f40; font-size:17px; font-weight:800; letter-spacing:-1px; }
-h1 { margin:0; font-size:20px; letter-spacing:-.6px; line-height:1.25; }
+h1 { margin:0; font-size:17px; letter-spacing:-.6px; line-height:1.25; }
 .brand-row p { margin:4px 0 0; color:#a6c7ce; font-size:8px; font-weight:700; letter-spacing:1.6px; }
 .pill { margin-left:auto; padding:4px 8px; border-radius:20px; font-size:10px; font-weight:650; white-space:nowrap; }
 .pill-ok { background:#d6f5e5; color:#176041; }

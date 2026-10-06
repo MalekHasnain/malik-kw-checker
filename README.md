@@ -1,83 +1,34 @@
-# KW Checker
+# Malik Kw Checker
 
-**SEO insights, right where you search.** Created by [Malik Hasnain](https://www.facebook.com/MalikHasnain22/).
+**Domain insights, right where you search.** By [Malik Hasnain](https://www.facebook.com/MalikHasnain22/).
 
-Personal Chrome extension that shows **SEO and competitive intelligence data on Google results**:
+A focused Chrome extension with exactly two research features on Google search results:
 
-- **Search volume, CPC, competition, 12-month trend** for the query you searched
-- **Related keywords table** (top ~20 ideas) with **CSV export**
-- Per-result badges on the header row:
-  - **Ahrefs Domain Rating (DR)**
-  - **Moz Domain Authority (DA)** & Page Authority (PA)
-  - **Site Age** (RDAP + WHOIS fallback for ccTLDs/subdomains)
-  - **Global Traffic Rank** & PageRank (Open PageRank)
-  - **CMS / Framework** (WordPress, Shopify, Next.js, Webflow, etc.)
+- **Ahrefs Domain Rating (DR)** — requires your Ahrefs APIv3 key.
+- **Site Age** — uses domain registration dates from RDAP with WHOIS fallback; no key required. Registration age does not indicate when a website first published content.
 
-All data sources are free or offer generous free tiers:
+Keeps the navy-and-teal design, expandable settings cards, and Malik Hasnain branding from KW Checker. Domain Rating attribution: [Ahrefs](https://ahrefs.com/).
 
-| Data | Source | Cost | Key needed |
-|---|---|---|---|
-| Volume / CPC / competition / ideas | Google Ads API `generateKeywordIdeas` | free | OAuth + developer token |
-| Domain Rating | Ahrefs `v3/public/domain-rating-free` | free | free APIv3 key |
-| Site age | RDAP + WHOIS fallback | free | none |
-| CMS / Framework | Built-in head/meta detection | free | none |
-| Traffic Rank & PageRank | Open PageRank API (Keywords Everywhere) | free (100k calls/mo) | free API key |
-| Domain Authority (DA) | Mozscape API v2 | free tier | free Moz token |
+## Download and install
 
-Attribution: Domain Rating by [Ahrefs](https://ahrefs.com/) (license: ahrefs.com/legal/domain-rating-license).
+1. Open [this repository](https://github.com/MalekHasnain/malik-kw-checker), choose **Code → Download ZIP**, or [download the ZIP directly](https://github.com/MalekHasnain/malik-kw-checker/archive/refs/heads/main.zip).
+2. Extract the ZIP to a permanent folder.
+3. Open `chrome://extensions` in desktop Chrome and enable **Developer mode**.
+4. Click **Load unpacked** and select the extracted folder containing `manifest.json` (usually `malik-kw-checker-main`).
+5. Pin **Malik Kw Checker** from Chrome’s Extensions puzzle menu.
+6. Open the popup, paste your Ahrefs key, and click **Save settings**. See [credential setup](CREDENTIALS.md).
+7. Search on Google. **DR** and **Age** badges appear beside supported organic results. Site Age works even without an Ahrefs key. Hover over badges for source or error details; click for domain details.
 
-## Download ZIP and install in Chrome
+To update, replace the installed folder’s files with the latest extracted ZIP, click **Reload** at `chrome://extensions`, and refresh your Google results tabs. Keep the folder in place.
 
-1. Visit [this repository](https://github.com/MalekHasnain/kw-checker), click the green **Code** button, then **Download ZIP**. You can also [download the latest main-branch ZIP](https://github.com/MalekHasnain/kw-checker/archive/refs/heads/main.zip).
-2. **Extract / unzip** the downloaded file into a permanent folder. Chrome loads the extracted files, not the ZIP itself.
-3. In desktop Chrome, type `chrome://extensions` into the address bar and press Enter.
-4. Turn on **Developer mode** in the top-right corner.
-5. Click **Load unpacked** and select the extracted **kw-checker-main** folder that contains `manifest.json`. If you see another folder inside, open it until you find that file.
-6. Open Chrome’s **Extensions** (puzzle) menu and **pin KW Checker** to your toolbar.
-7. Click the KW icon. Expand the data source you want, enter credentials, and choose **Save settings**. For Google Ads, also click **Connect Google**. Follow the [credentials guide](CREDENTIALS.md) for provider setup.
-8. Search on Google to see the keyword panel and result badges. Use **Test connection** in the popup to check a provider.
+If Chrome reports a missing manifest, select the inner extracted folder containing `manifest.json`, not the ZIP or its parent folder. If results do not show after installation, reload the Google results page. If you also installed the original KW Checker, disable it to avoid overlapping panels.
 
-Site age and CMS/framework detection need no API key. Other metrics need their corresponding provider credentials. This is a manually installed extension, not a Chrome Web Store listing.
+## Data and permissions
 
-**Updating:** Download and extract the new ZIP, replace the files in your existing extension folder, then click **Reload** on KW Checker at `chrome://extensions`. Refresh open Google results tabs. Keep the installed folder in place; Chrome needs those files.
+The extension stores the Ahrefs key and cached results locally in Chrome. It sends result domains to Ahrefs (when configured) and registration providers for lookup. HTTPS access supports the different RDAP registries and WHOIS fallbacks. It does not need Google sign-in or Google Ads credentials.
 
-**Troubleshooting:** “Manifest file is missing” usually means you selected the ZIP or its parent folder. Select the extracted folder containing `manifest.json`. Missing metrics? Save the relevant credentials, connect Google if needed, and run the provider’s test.
-
-Installation follows [Chrome’s official unpacked-extension guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked).
+DR is cached for 24 hours. Registration data is cached for up to a year and the displayed age is recalculated from the date. Missing records, unsupported domains, provider errors, or rate limits can leave badges unavailable. Use **Test connection** or **Clear cache** in the popup to troubleshoot.
 
 ## Creator
 
-Built by **Malik Hasnain**. [Connect on Facebook](https://www.facebook.com/MalikHasnain22/).
-
-## Architecture
-
-```
-kw-checker/
-├── manifest.json              MV3; content script on Google SERPs (58 TLDs)
-├── background/
-│   └── service-worker.js      message router; parallel analyze() pipeline
-├── lib/
-│   ├── settings.js            chrome.storage.local settings
-│   ├── cache.js               TTL cache + negative caching (429 backoff)
-│   ├── oauth.js               Google OAuth 2.0, auth-code + PKCE via chrome.identity
-│   ├── google-ads.js          generateKeywordIdeas REST call (v25, configurable)
-│   ├── ahrefs.js              domain-rating-free + 24h cache + 429 backoff
-│   ├── rdap.js                subdomain normalization, RDAP + dual WHOIS fallback
-│   ├── tech-detect.js         CMS and frontend framework detection
-│   ├── traffic-rank.js        Open PageRank API (supports opr_live_ keys)
-│   └── moz.js                 Mozscape API v2 for DA and PA
-├── content/
-│   ├── content.js             SERP widget + result badges + CSV export
-│   └── content.css            light/dark styles + color-coded pills
-├── popup/                     settings UI with direct links under each field
-└── icons/                     high-visibility KW extension icon
-```
-
-### Caching
-
-- Keyword metrics: **30 days**
-- Traffic Rank: **30 days**
-- CMS / Framework: **7 days**
-- DR & Moz DA: **24 h**
-- Site age: **forever** (registration date never changes)
-- Errors/429: negative-cached 5–10 min to avoid rate-limiting
+**Malik Hasnain** · [Connect on Facebook](https://www.facebook.com/MalikHasnain22/)
