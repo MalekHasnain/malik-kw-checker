@@ -1,7 +1,12 @@
 // KW Checker — popup
 
 const $ = id => document.getElementById(id);
-const send = msg => new Promise(r => chrome.runtime.sendMessage(msg, r));
+const send = msg => new Promise(resolve => {
+  chrome.runtime.sendMessage(msg, response => {
+    const error = chrome.runtime.lastError;
+    resolve(error ? { ok: false, error: error.message } : response);
+  });
+});
 
 function setHint(id, text, isError) {
   const el = $(id);
@@ -12,7 +17,7 @@ function setHint(id, text, isError) {
 
 async function refresh() {
   const st = await send({ type: 'kw:status' });
-  if (!st?.ok) { $('status-pill').textContent = 'error'; return; }
+  if (!st?.ok) { $('status-pill').textContent = 'Unavailable'; $('status-pill').className = 'pill pill-warn'; setHint('google-hint', st?.error || 'Unable to load settings. Reopen the extension and try again.', true); return; }
 
   const s = st.settings;
   $('f-clientid').value = s.googleClientId || '';
@@ -62,7 +67,14 @@ async function save() {
   if ($('f-opr').value.trim()) patch.openPageRankKey = $('f-opr').value.trim();
   if ($('f-moz').value.trim()) patch.mozToken = $('f-moz').value.trim();
 
-  await send({ type: 'kw:saveSettings', patch });
+  const result = await send({ type: 'kw:saveSettings', patch });
+  if (!result?.ok) {
+    for (const id of ['google-hint', 'ahrefs-hint', 'opr-hint', 'moz-hint']) {
+      setHint(id, result?.error || 'Could not save settings. Please try again.', true);
+    }
+    return;
+  }
+  for (const id of ['f-devtoken', 'f-ahrefs', 'f-opr', 'f-moz']) $(id).value = '';
   setHint('google-hint', 'Saved.');
   setHint('ahrefs-hint', 'Saved.');
   setHint('opr-hint', 'Saved.');

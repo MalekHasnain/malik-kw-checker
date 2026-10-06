@@ -183,3 +183,31 @@
   .kwc-table td { border-color: #303134; }
   .kwc-toggle { background: #303134; border-color: #3c4043; color: #e8eaed; }
 }
+
+/* Branded research panel */
+#kw-checker-widget .kwc-card { border-radius:16px; border-color:#d4e4e2; border-top:3px solid #087b70; padding:18px; box-shadow:0 4px 18px #173b4810; }
+#kw-checker-widget .kwc-head { gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+#kw-checker-widget .kwc-logo { background:#123947; color:#b7f7df; padding:7px 8px; border-radius:9px; }
+#kw-checker-widget .kwc-title { letter-spacing:-.4px; }
+#kw-checker-widget .kwc-metrics { gap:10px; align-items:stretch; }
+#kw-checker-widget .kwc-metric { flex:1 1 100px; background:#f2f7f7; border:1px solid #e4eeee; padding:10px 12px; border-radius:9px; }
+#kw-checker-widget .kwc-metric b { font-size:19px; line-height:1.6; }
+#kw-checker-widget .kwc-toggle { color:#176458; background:#edf7f3; border-color:#c7e2d9; }
+#kw-checker-widget .kwc-tablewrap { overflow-x:auto; }
+#kw-checker-widget .kwc-table th { font-size:11px; padding:9px 8px; }
+#kw-checker-widget .kwc-table td { padding:9px 8px; }
+#kw-checker-widget .kwc-table tbody tr:hover { background:#f2f7f7; }
+#kw-checker-widget .kwc-csv { background:#087b70; padding:8px 14px; border-radius:7px; }
+#kw-checker-widget .kwc-foot { flex-wrap:wrap; border-top:1px solid #e4eeee; padding-top:12px; margin-top:15px; color:#627480; }
+#kw-checker-widget .kwc-foot a { color:#087b70; }
+#kw-checker-widget button:focus-visible,#kw-checker-widget a:focus-visible { outline:2px solid #269c95; outline-offset:3px; }
+@media (prefers-color-scheme:dark) {
+  #kw-checker-widget .kwc-card { border-color:#36514f; border-top-color:#65cdb6; }
+  #kw-checker-widget .kwc-metric { background:#263334; border-color:#38504e; }
+  #kw-checker-widget .kwc-metric label { color:#adc2c1; }
+  #kw-checker-widget .kwc-toggle { background:#28413d; color:#b7f7df; border-color:#45635c; }
+  #kw-checker-widget .kwc-table tbody tr:hover { background:#263334; }
+  #kw-checker-widget .kwc-foot { border-color:#38504e; color:#adc2c1; }
+  #kw-checker-widget .kwc-foot a { color:#85dfc9; }
+  #kw-checker-widget .kwc-error { color:#ffaaa5; }
+}

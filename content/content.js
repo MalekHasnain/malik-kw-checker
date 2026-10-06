@@ -173,7 +173,7 @@
           <span class="kwc-logo">KW</span>
           <span class="kwc-title">Checker</span>
           <span class="kwc-query">\u201C${esc(query)}\u201D</span>
-          <button class="kwc-toggle" id="kwc-toggle" title="Related keywords">Related \u25BE</button>
+          <button class="kwc-toggle" id="kwc-toggle" title="Related keywords" aria-expanded="false" aria-controls="kwc-tablewrap">Related \u25BE</button>
         </div>
         <div class="kwc-metrics">
           <div class="kwc-metric"><label>Volume</label><b>${e ? fmtVol(e.volume) : '—'}</b></div>
@@ -189,14 +189,19 @@
           <button class="kwc-csv" id="kwc-csv">Export CSV</button>
         </div>
         <div class="kwc-foot">
-          <span>Keyword data: Google Ads API</span>
+          <span>By <a href="https://www.facebook.com/MalikHasnain22/" target="_blank" rel="noopener noreferrer">Malik Hasnain ↗</a> · Google Ads data</span>
           <span>Domain Rating by <a href="https://ahrefs.com/" target="_blank" rel="noopener">Ahrefs</a></span>
         </div>
       </div>`;
 
     document.getElementById('kwc-toggle')?.addEventListener('click', () => {
       const wrap = document.getElementById('kwc-tablewrap');
-      if (wrap) wrap.hidden = !wrap.hidden;
+      if (wrap) {
+        wrap.hidden = !wrap.hidden;
+        const toggle = document.getElementById('kwc-toggle');
+        toggle.setAttribute('aria-expanded', String(!wrap.hidden));
+        toggle.textContent = wrap.hidden ? 'Related ▾' : 'Related ▴';
+      }
     });
     document.getElementById('kwc-csv')?.addEventListener('click', () => {
       const csv = ['Keyword,Volume,CPC Low (cents),CPC High (cents),Competition']

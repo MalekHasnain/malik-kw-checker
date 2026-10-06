@@ -1,5 +1,7 @@
 # KW Checker
 
+**SEO insights, right where you search.** Created by [Malik Hasnain](https://www.facebook.com/MalikHasnain22/).
+
 Personal Chrome extension that shows **SEO and competitive intelligence data on Google results**:
 
 - **Search volume, CPC, competition, 12-month trend** for the query you searched
@@ -24,12 +26,28 @@ All data sources are free or offer generous free tiers:
 
 Attribution: Domain Rating by [Ahrefs](https://ahrefs.com/) (license: ahrefs.com/legal/domain-rating-license).
 
-## Install (personal use — no Web Store)
+## Download ZIP and install in Chrome
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode** (top right)
-3. **Load unpacked** → select this `kw-checker` folder
-4. Open the popup (puzzle icon → KW Checker) and set up credentials — see `CREDENTIALS.md`
+1. Visit [this repository](https://github.com/MalekHasnain/kw-checker), click the green **Code** button, then **Download ZIP**. You can also [download the latest main-branch ZIP](https://github.com/MalekHasnain/kw-checker/archive/refs/heads/main.zip).
+2. **Extract / unzip** the downloaded file into a permanent folder. Chrome loads the extracted files, not the ZIP itself.
+3. In desktop Chrome, type `chrome://extensions` into the address bar and press Enter.
+4. Turn on **Developer mode** in the top-right corner.
+5. Click **Load unpacked** and select the extracted **kw-checker-main** folder that contains `manifest.json`. If you see another folder inside, open it until you find that file.
+6. Open Chrome’s **Extensions** (puzzle) menu and **pin KW Checker** to your toolbar.
+7. Click the KW icon. Expand the data source you want, enter credentials, and choose **Save settings**. For Google Ads, also click **Connect Google**. Follow the [credentials guide](CREDENTIALS.md) for provider setup.
+8. Search on Google to see the keyword panel and result badges. Use **Test connection** in the popup to check a provider.
+
+Site age and CMS/framework detection need no API key. Other metrics need their corresponding provider credentials. This is a manually installed extension, not a Chrome Web Store listing.
+
+**Updating:** Download and extract the new ZIP, replace the files in your existing extension folder, then click **Reload** on KW Checker at `chrome://extensions`. Refresh open Google results tabs. Keep the installed folder in place; Chrome needs those files.
+
+**Troubleshooting:** “Manifest file is missing” usually means you selected the ZIP or its parent folder. Select the extracted folder containing `manifest.json`. Missing metrics? Save the relevant credentials, connect Google if needed, and run the provider’s test.
+
+Installation follows [Chrome’s official unpacked-extension guide](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked).
+
+## Creator
+
+Built by **Malik Hasnain**. [Connect on Facebook](https://www.facebook.com/MalikHasnain22/).
 
 ## Architecture
 

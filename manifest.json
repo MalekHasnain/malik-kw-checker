@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "KW Checker",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Keywords, Ahrefs DR, Moz DA, Site Age, Traffic Rank, CMS Framework & Monetization model on Google results.",
   "minimum_chrome_version": "116",
   "permissions": [
@@ -17,7 +17,7 @@
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "KW Checker"
+    "default_title": "KW Checker by Malik Hasnain"
   },
   "icons": {
     "16": "icons/icon16.png",
@@ -94,5 +94,6 @@
       ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "author": "Malik Hasnain"
 }
